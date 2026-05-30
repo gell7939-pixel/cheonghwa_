@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>臥龍鳳雛 · 서사 공간</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#080808;color:#ccc;font-family:'Noto Sans KR',sans-serif}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0d0d0d}
+::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+/* ─── GLOBAL HEADER ─── */
+#g-header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(8,8,8,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid #161616;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:52px;
+}
+.g-logo{font-family:'Noto Serif KR',serif;font-size:14px;color:#e0e0e0;letter-spacing:.18em;display:flex;align-items:center;gap:10px}
+.g-logo-dot{width:7px;height:7px;border-radius:50%;background:#cc2222;flex-shrink:0}
+.g-logo-dot.live{background:#00cc66;box-shadow:0 0 6px #00cc6655}
+.g-sub{font-size:9px;color:#333;letter-spacing:.12em;margin-top:2px;font-family:'Noto Sans KR',sans-serif}
+.g-right{display:flex;align-items:center;gap:10px}
+#conn-badge{font-size:9px;letter-spacing:.1em;padding:3px 8px;border:1px solid;border-radius:3px;transition:all .3s}
+#conn-badge.online{color:#1a6644;border-color:#0d3322}
+#conn-badge.offline{color:#662222;border-color:#331111}
+#conn-badge.syncing{color:#665500;border-color:#332200}
+.g-back-btn{display:none;font-size:11px;color:#555;background:none;border:1px solid #222;border-radius:3px;padding:4px 12px;cursor:pointer;font-family:inherit;letter-spacing:.06em;transition:color .15s}
+.g-back-btn:hover{color:#cc2222;border-color:#441111}
+
+/* ─── GALLERY VIEW ─── */
+#gallery-view{padding:80px 28px 40px;max-width:1100px;margin:0 auto;display:block}
+.gallery-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.gallery-title{font-family:'Noto Serif KR',serif;font-size:11px;color:#3a3a3a;letter-spacing:.22em}
+#new-story-btn{
+  font-size:11px;color:#cc2222;background:none;
+  border:1px solid #441111;border-radius:3px;
+  padding:6px 16px;cursor:pointer;font-family:inherit;
+  letter-spacing:.08em;transition:all .15s;
+}
+#new-story-btn:hover{background:#1a0808;border-color:#cc2222}
+
+.story-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.story-card{
+  background:#0e0e0e;border:1px solid #181818;border-radius:6px;
+  padding:18px;cursor:pointer;transition:border-color .18s,transform .12s;
+  position:relative;overflow:hidden;user-select:none;
+}
+.story-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent,#cc2222);opacity:.6;transition:opacity .18s;
+}
+.story-card:hover{border-color:#2a2a2a;transform:translateY(-2px)}
+.story-card:hover::before{opacity:1}
+.sc-title{font-family:'Noto Serif KR',serif;font-size:14px;color:#ddd;letter-spacing:.06em;margin-bottom:10px;line-height:1.5}
+.sc-chars{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;min-height:24px}
+.sc-char-chip{
+  display:flex;align-items:center;gap:4px;
+  padding:2px 7px;border-radius:12px;border:1px solid;font-size:10px;
+}
+.sc-meta{font-size:10px;color:#333;letter-spacing:.06em;display:flex;align-items:center;gap:10px}
+.sc-log-count{color:#3a3a3a}
+.sc-date{color:#2a2a2a}
+.sc-del{
+  position:absolute;top:10px;right:10px;
+  font-size:10px;color:#2a2a2a;background:none;border:none;cursor:pointer;
+  padding:2px 5px;border-radius:3px;transition:color .12s;font-family:inherit;
+}
+.sc-del:hover{color:#883333}
+
+.gallery-empty{text-align:center;padding:80px 0;color:#252525;font-size:12px;letter-spacing:.2em;line-height:2.2;font-family:'Noto Serif KR',serif}
+
+/* ─── STORY VIEW ─── */
+#story-view{display:none;flex-direction:column;height:100vh;max-width:820px;margin:0 auto}
+#story-header{
+  background:#0d0d0d;border-bottom:1px solid #141414;
+  padding:0 18px;height:52px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;margin-top:52px;
+}
+#story-title-display{font-family:'Noto Serif KR',serif;font-size:13px;color:#aaa;letter-spacing:.1em}
+.story-header-right{display:flex;gap:8px;align-items:center}
+#char-mgr-btn{font-size:10px;color:#444;background:none;border:1px solid #1e1e1e;border-radius:3px;padding:3px 10px;cursor:pointer;font-family:inherit;transition:color .15s}
+#char-mgr-btn:hover{color:#aaa}
+#clr-btn{font-size:10px;color:#2a2a2a;background:none;border:1px solid #1a1a1a;border-radius:3px;padding:3px 9px;cursor:pointer;font-family:inherit;transition:color .15s}
+#clr-btn:hover{color:#883333;border-color:#441111}
+
+#feed{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:2px}
+.scene-divider{text-align:center;margin:20px 0 14px;position:relative;flex-shrink:0}
+.scene-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:#1a1a1a}
+.scene-divider span{font-size:10px;color:#3a3a3a;letter-spacing:.18em;background:#080808;padding:0 14px;position:relative;font-family:'Noto Serif KR',serif}
+.msg-row{display:flex;align-items:flex-start;gap:10px;padding:3px 0;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;border:1.5px solid;margin-top:2px}
+.msg-body{max-width:calc(100% - 54px)}
+.msg-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.char-name{font-size:11px;font-weight:700;letter-spacing:.07em}
+.msg-time{font-size:10px;color:#383838;letter-spacing:.04em}
+.bubble{display:inline-block;padding:9px 14px;font-size:13px;line-height:1.72;border-radius:0 8px 8px 8px;border-left:2px solid;word-break:break-word;white-space:pre-wrap;color:#ccc}
+.typing-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.typing-dots{display:flex;gap:3px;align-items:center}
+.typing-dots span{width:4px;height:4px;border-radius:50%;background:#444;animation:td .9s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+#feed-empty{color:#1e1e1e;font-size:11px;text-align:center;margin-top:60px;letter-spacing:.18em;line-height:2;font-family:'Noto Serif KR',serif}
+
+#char-panel{background:#0d0d0d;border-top:1px solid #141414;padding:8px 18px;flex-shrink:0}
+#char-panel-label{font-size:9px;color:#383838;letter-spacing:.18em;margin-bottom:7px}
+#char-list{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.char-chip{display:flex;align-items:center;gap:5px;background:#111;border:1px solid #1e1e1e;border-radius:20px;padding:3px 9px 3px 4px;cursor:pointer;transition:border-color .15s;user-select:none}
+.char-chip:hover{border-color:#2e2e2e}
+.chip-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:1px solid;flex-shrink:0}
+.chip-name{font-size:11px;letter-spacing:.04em}
+#add-char-btn{font-size:11px;color:#383838;background:none;border:1px dashed #1e1e1e;border-radius:20px;padding:3px 12px;cursor:pointer;font-family:inherit;transition:color .15s}
+#add-char-btn:hover{color:#666}
+
+#composer{background:#0d0d0d;border-top:1px solid #1a1a1a;padding:10px 18px;flex-shrink:0}
+#scene-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.lbl{font-size:9px;color:#383838;letter-spacing:.14em;white-space:nowrap}
+#scene-input{flex:1;background:#111;border:1px solid #1a1a1a;color:#555;font-size:11px;padding:5px 10px;border-radius:4px;outline:none;font-family:inherit;letter-spacing:.06em}
+#scene-input::placeholder{color:#2a2a2a}
+#scene-input:focus{border-color:#2a2a2a;color:#888}
+#composer-row{display:flex;gap:8px;align-items:flex-end}
+#char-select{background:#111;border:1px solid #1a1a1a;color:#888;font-size:12px;padding:7px 10px;border-radius:4px;cursor:pointer;outline:none;font-family:inherit;min-width:110px}
+#char-select option{background:#111}
+#msg-input{flex:1;background:#111;border:1px solid #1a1a1a;color:#ddd;font-size:13px;padding:7px 12px;border-radius:4px;resize:none;outline:none;font-family:inherit;line-height:1.6;min-height:40px;max-height:120px}
+#msg-input:focus{border-color:#2a2a2a}
+#msg-input::placeholder{color:#2a2a2a}
+#send-btn{background:#111;border:1px solid #1a1a1a;color:#666;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;white-space:nowrap;letter-spacing:.06em}
+#send-btn:hover{border-color:#cc2222;color:#ff4444}
+
+/* ─── MODALS ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:500}
+.modal{background:#111;border:1px solid #222;border-radius:8px;padding:22px;width:300px;max-width:90vw}
+.modal h3{font-size:11px;color:#888;letter-spacing:.14em;margin-bottom:16px;font-family:'Noto Serif KR',serif}
+.modal input{width:100%;background:#161616;border:1px solid #222;color:#ccc;font-size:12px;padding:7px 10px;border-radius:4px;outline:none;font-family:inherit;margin-bottom:8px}
+.modal input:focus{border-color:#333}
+.row2{display:flex;gap:8px}
+.row2 input:first-child{width:65px;flex-shrink:0}
+.modal-section{font-size:9px;color:#444;letter-spacing:.14em;margin-bottom:7px}
+.color-opts{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.color-opt{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .1s}
+.color-opt.sel{border-color:#fff}
+.modal-btns{display:flex;gap:7px;margin-top:2px}
+.modal-btns button{flex:1;padding:7px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;border:1px solid;letter-spacing:.06em;transition:opacity .15s}
+.modal-btns button:hover{opacity:.8}
+.btn-ok{background:#1a1a1a;border-color:#cc2222;color:#ff5555}
+.btn-del{background:#1a1a1a;border-color:#441111;color:#883333}
+.btn-cancel{background:none;border-color:#222;color:#555}
+
+/* new story modal wide */
+.modal.wide{width:360px}
+</style>
+</head>
+<body>
+
+<!-- GLOBAL HEADER -->
+<div id="g-header">
+  <div>
+    <div class="g-logo">
+      <div class="g-logo-dot" id="g-dot"></div>
+      <span>◈ 臥龍鳳雛 · 서사 공간 ◈</span>
+    </div>
+    <div class="g-sub">와룡이나 봉추 중 한 사람만 얻어도 천하를 얻을 수 있다</div>
+  </div>
+  <div class="g-right">
+    <span id="conn-badge" class="offline">● OFFLINE</span>
+    <button class="g-back-btn" id="g-back-btn" onclick="goGallery()">◂ 목록</button>
+  </div>
+</div>
+
+<!-- GALLERY VIEW -->
+<div id="gallery-view">
+  <div class="gallery-toolbar">
+    <div class="gallery-title">▸ STORIES</div>
+    <button id="new-story-btn" onclick="openNewStory()">+ 새 썰 시작</button>
+  </div>
+  <div class="story-grid" id="story-grid">
+    <div class="gallery-empty">── 아직 썰이 없습니다 ──<br>새 썰 시작 버튼을 눌러 첫 번째 이야기를 시작하세요</div>
+  </div>
+</div>
+
+<!-- STORY VIEW -->
+<div id="story-view">
+  <div id="story-header">
+    <div id="story-title-display">제목 없음</div>
+    <div class="story-header-right">
+      <button id="char-mgr-btn" onclick="openAdd()">+ 캐릭터</button>
+      <button id="clr-btn" onclick="clearStoryLogs()">대사 삭제</button>
+    </div>
+  </div>
+  <div id="feed"></div>
+  <div id="char-panel">
+    <div id="char-panel-label">▸ CHARACTERS</div>
+    <div id="char-list"></div>
+  </div>
+  <div id="composer">
+    <div id="scene-row">
+      <span class="lbl">SCENE</span>
+      <input id="scene-input" type="text" placeholder="씬 태그 (예: 씬#01 · 雨夜의 거래)  ←  비워두면 이전 씬 유지">
+    </div>
+    <div id="composer-row">
+      <select id="char-select"><option value="">— 화자 —</option></select>
+      <textarea id="msg-input" rows="1" placeholder="대사 입력 후 Enter  (줄바꿈: Shift+Enter)"></textarea>
+      <button id="send-btn">전송 ▸</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ══════════════════════════════════════════════
+//  🔧 FIREBASE CONFIG — 여기에 붙여넣기
+// ══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID",
+};
+// ══════════════════════════════════════════════
+
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
+         updateDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ─── 팔레트 ───
+const PALETTE = [
+  {bg:'#180404',border:'#bb1e1e',text:'#ff4444'},
+  {bg:'#041210',border:'#095a4a',text:'#00ccaa'},
+  {bg:'#100c00',border:'#704000',text:'#ffaa22'},
+  {bg:'#080418',border:'#3d2488',text:'#9966ff'},
+  {bg:'#001018',border:'#084870',text:'#22aadd'},
+  {bg:'#100018',border:'#601878',text:'#dd44cc'},
+  {bg:'#001400',border:'#1a5c1a',text:'#44cc44'},
+  {bg:'#101010',border:'#3a3a3a',text:'#aaaaaa'},
+];
+
+// ─── 상태 ───
+let db;
+let stories   = [];          // [{id, title, createdAt, chars:[]}]
+let chars     = [];          // 현재 썰의 캐릭터
+let logs      = [];          // 현재 썰의 로그
+let curStoryId = null;
+let lastScene  = '';
+let myId       = 'u_' + Math.random().toString(36).slice(2,8);
+let typingTimer = null;
+let typingUsers = {};
+
+let unsubStories = null, unsubChars = null, unsubLogs = null, unsubTyping = null;
+
+// ─── 유틸 ───
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ts(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function fmtDate(ms){if(!ms)return'';const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()}`;}
+
+// ─── 상태 배지 ───
+function setStatus(s){
+  const el=document.getElementById('conn-badge');
+  const dot=document.getElementById('g-dot');
+  if(s==='online'){el.textContent='● LIVE';el.className='online';dot.className='g-logo-dot live';}
+  else if(s==='syncing'){el.textContent='◌ SYNC';el.className='syncing';dot.style.background='#ccaa00';}
+  else{el.textContent='● OFFLINE';el.className='offline';dot.className='g-logo-dot';}
+}
+
+// ─── 부팅 ───
+async function boot(){
+  setStatus('syncing');
+  try{
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getFirestore(app);
+    subscribeStories();
+    setStatus('online');
+  } catch(e){
+    setStatus('offline');
+    console.error('Firebase 연결 실패:', e);
+    alert('Firebase 연결 실패:\n'+e.message+'\n\nFIREBASE_CONFIG를 코드 안에 직접 입력해주세요.');
+  }
+}
+boot();
+
+// ─── STORIES 구독 ───
+function subscribeStories(){
+  const q=query(collection(db,'stories'),orderBy('createdAt','desc'));
+  unsubStories=onSnapshot(q, async snap=>{
+    stories=[];
+    for(const d of snap.docs){
+      const data={id:d.id,...d.data()};
+      // 캐릭터 목록도 함께 로드
+      const cSnap = await getDocs(query(collection(db,'stories',d.id,'chars'),orderBy('order')));
+      data.chars = cSnap.docs.map(cd=>({id:cd.id,...cd.data()}));
+      stories.push(data);
+    }
+    renderGallery();
+  });
+}
+
+// ─── 갤러리 렌더 ───
+function renderGallery(){
+  const grid=document.getElementById('story-grid');
+  if(!stories.length){
+    grid.innerHTML='<div class="gallery-empty">── 아직 썰이 없습니다 ──<br>새 썰 시작 버튼을 눌러 첫 번째 이야기를 시작하세요</div>';
+    return;
+  }
+  grid.innerHTML=stories.map((s,i)=>{
+    const accentColors=['#cc2222','#00ccaa','#9966ff','#ffaa22','#22aadd','#dd44cc'];
+    const accent=accentColors[i%accentColors.length];
+    const chipsHtml = s.chars.length
+      ? s.chars.map(c=>`<div class="sc-char-chip" style="background:${c.c.bg};border-color:${c.c.border};color:${c.c.text}">${c.emoji} ${esc(c.name)}</div>`).join('')
+      : '<span style="font-size:10px;color:#2a2a2a;letter-spacing:.1em">캐릭터 없음</span>';
+    return `<div class="story-card" style="--accent:${accent}" onclick="openStory('${s.id}')">
+      <button class="sc-del" onclick="event.stopPropagation();deleteStory('${s.id}')" title="썰 삭제">✕</button>
+      <div class="sc-title">${esc(s.title||'제목 없음')}</div>
+      <div class="sc-chars">${chipsHtml}</div>
+      <div class="sc-meta">
+        <span class="sc-log-count">대사 ${s.logCount||0}개</span>
+        <span class="sc-date">${fmtDate(s.createdAt?.toMillis?.()??s.createdAt)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── 새 썰 모달 ───
+window.openNewStory = function(){
+  const modal=makeModal(`<h3>NEW STORY</h3>
+    <input id="m-story-title" type="text" placeholder="썰 제목 (예: 삼국지 · 적벽대전)" autofocus>
+    <div class="modal-btns">
+      <button class="btn-ok" onclick="confirmNewStory()">시작</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+    </div>`,'wide');
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('m-story-title')?.focus(),50);
+};
+
+window.confirmNewStory = async function(){
+  const title=document.getElementById('m-story-title').value.trim()||'제목 없음';
+  closeModal();
+  setStatus('syncing');
+  const ref=await addDoc(collection(db,'stories'),{title,createdAt:serverTimestamp(),logCount:0});
+  setStatus('online');
+  openStory(ref.id);
+};
+
+// ─── 썰 열기 ───
+window.openStory = function(id){
+  curStoryId=id;
+  lastScene='';
+
+  // UI 전환
+  document.getElementById('gallery-view').style.display='none';
+  document.getElementById('story-view').style.display='flex';
+  document.getElementById('g-back-btn').style.display='block';
+
+  const story=stories.find(s=>s.id===id);
+  document.getElementById('story-title-display').textContent=story?.title||'제목 없음';
+
+  // 구독 시작
+  unsubChars&&unsubChars(); unsubLogs&&unsubLogs(); unsubTyping&&unsubTyping();
+  subscribeChars(); subscribeLogs(); subscribeTyping();
+  scrollFeed();
+};
+
+window.goGallery = function(){
+  unsubChars&&unsubChars(); unsubLogs&&unsubLogs(); unsubTyping&&unsubTyping();
+  curStoryId=null; chars=[]; logs=[]; typingUsers={};
+  document.getElementById('story-view').style.display='none';
+  document.getElementById('gallery-view').style.display='block';
+  document.getElementById('g-back-btn').style.display='none';
+  clearTyping();
+};
+
+// ─── 썰 삭제 ───
+window.deleteStory = async function(id){
+  if(!confirm('이 썰을 삭제할까요? 모든 대사와 캐릭터가 함께 삭제됩니다.')) return;
+  setStatus('syncing');
+  const batch=writeBatch(db);
+  // subcollections 삭제
+  const [cSnap,lSnap]=await Promise.all([
+    getDocs(collection(db,'stories',id,'chars')),
+    getDocs(collection(db,'stories',id,'logs')),
+  ]);
+  cSnap.docs.forEach(d=>batch.delete(d.ref));
+  lSnap.docs.forEach(d=>batch.delete(d.ref));
+  batch.delete(doc(db,'stories',id));
+  await batch.commit();
+  setStatus('online');
+};
+
+// ─── 캐릭터 구독 (현재 썰) ───
+function subscribeChars(){
+  const q=query(collection(db,'stories',curStoryId,'chars'),orderBy('order'));
+  unsubChars=onSnapshot(q, snap=>{
+    chars=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderChars();
+    renderFeed();
+  });
+}
+
+// ─── 로그 구독 (현재 썰) ───
+function subscribeLogs(){
+  const q=query(collection(db,'stories',curStoryId,'logs'),orderBy('ts'));
+  unsubLogs=onSnapshot(q, snap=>{
+    logs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateLogCount();
+    renderFeed();
+  });
+}
+
+function updateLogCount(){
+  if(!curStoryId) return;
+  setDoc(doc(db,'stories',curStoryId),{logCount:logs.length},{merge:true});
+}
+
+// ─── 타이핑 구독 ───
+let typingUnsubLocal=null;
+function subscribeTyping(){
+  unsubTyping=onSnapshot(collection(db,'typing_'+curStoryId.slice(0,8)), snap=>{
+    typingUsers={};
+    const now=Date.now();
+    snap.docs.forEach(d=>{
+      const data=d.data();
+      if(d.id!==myId && data.ts && (now-data.ts)<5000) typingUsers[d.id]=data;
+    });
+    renderTyping();
+  });
+}
+
+// ─── 피드 렌더 ───
+function renderFeed(){
+  const feed=document.getElementById('feed');
+  const atBottom=feed.scrollHeight-feed.scrollTop-feed.clientHeight<60;
+  const visibleLogs=logs.filter(m=>chars.find(c=>c.id===m.charId));
+  if(!visibleLogs.length){
+    feed.innerHTML='<div id="feed-empty">── 아직 대사가 없습니다 ──<br>하단에서 화자를 선택하고 대사를 입력하세요</div>';
+    return;
+  }
+  let html='';
+  let prevScene=null;
+  visibleLogs.forEach(m=>{
+    const ch=chars.find(c=>c.id===m.charId);
+    if(m.scene&&m.scene!==prevScene){
+      prevScene=m.scene;
+      html+=`<div class="scene-divider"><span>◈ ${esc(m.scene)} ◈</span></div>`;
+    }
+    html+=`<div class="msg-row">
+      <div class="avatar" style="background:${ch.c.bg};border-color:${ch.c.border}">${ch.emoji}</div>
+      <div class="msg-body">
+        <div class="msg-meta">
+          <span class="char-name" style="color:${ch.c.text}">${esc(ch.name)}</span>
+          <span class="msg-time">${m.time||''}</span>
+        </div>
+        <div class="bubble" style="background:${ch.c.bg};border-color:${ch.c.border}">${esc(m.text).replace(/\n/g,'<br>')}</div>
+      </div>
+    </div>`;
+  });
+  feed.innerHTML=html;
+  if(atBottom) scrollFeed();
+}
+
+function renderTyping(){
+  let el=document.getElementById('typing-area');
+  const feed=document.getElementById('feed');
+  const entries=Object.values(typingUsers);
+  if(!entries.length){el?.remove();return;}
+  if(!el){el=document.createElement('div');el.id='typing-area';feed.appendChild(el);}
+  el.innerHTML=entries.map(u=>{
+    const ch=chars.find(c=>c.id===u.charId);
+    if(!ch) return '';
+    return `<div class="typing-row">
+      <div class="avatar" style="width:26px;height:26px;font-size:12px;background:${ch.c.bg};border-color:${ch.c.border}">${ch.emoji}</div>
+      <span style="font-size:10px;color:${ch.c.text};letter-spacing:.06em">${esc(ch.name)}</span>
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>`;
+  }).join('');
+}
+
+function scrollFeed(){
+  const feed=document.getElementById('feed');
+  setTimeout(()=>{feed.scrollTop=feed.scrollHeight;},50);
+}
+
+// ─── 캐릭터 패널 렌더 ───
+function renderChars(){
+  const list=document.getElementById('char-list');
+  const sel=document.getElementById('char-select');
+  const prev=sel.value;
+  let chips='';
+  let opts='<option value="">— 화자 —</option>';
+  chars.forEach(ch=>{
+    chips+=`<div class="char-chip" onclick="openEdit('${ch.id}')">
+      <div class="chip-av" style="background:${ch.c.bg};border-color:${ch.c.border};color:${ch.c.text}">${ch.emoji}</div>
+      <span class="chip-name" style="color:${ch.c.text}">${esc(ch.name)}</span>
+    </div>`;
+    opts+=`<option value="${ch.id}">${ch.emoji} ${ch.name}</option>`;
+  });
+  chips+=`<button id="add-char-btn" onclick="openAdd()">+ 추가</button>`;
+  list.innerHTML=chips;
+  sel.innerHTML=opts;
+  if(prev) sel.value=prev;
+}
+
+// ─── 전송 ───
+async function send(){
+  if(!db||!curStoryId) return;
+  const charId=document.getElementById('char-select').value;
+  const text=document.getElementById('msg-input').value.trim();
+  if(!charId||!text) return;
+  const sceneInp=document.getElementById('scene-input');
+  const scene=sceneInp.value.trim()||lastScene;
+  if(sceneInp.value.trim()) lastScene=sceneInp.value.trim();
+  document.getElementById('msg-input').value='';
+  document.getElementById('msg-input').style.height='40px';
+  clearTypingDoc();
+  setStatus('syncing');
+  await addDoc(collection(db,'stories',curStoryId,'logs'),{charId,text,scene,time:ts(),ts:serverTimestamp()});
+  setStatus('online');
+}
+
+// ─── 타이핑 업데이트 ───
+async function updateTypingDoc(){
+  if(!db||!curStoryId) return;
+  const charId=document.getElementById('char-select').value;
+  if(!charId) return;
+  await setDoc(doc(db,'typing_'+curStoryId.slice(0,8),myId),{charId,ts:Date.now()});
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(clearTypingDoc,4000);
+}
+async function clearTypingDoc(){
+  if(!db||!curStoryId) return;
+  clearTimeout(typingTimer);
+  try{await deleteDoc(doc(db,'typing_'+curStoryId.slice(0,8),myId));}catch(e){}
+}
+async function clearTyping(){
+  clearTimeout(typingTimer);
+  if(!db) return;
+  // 혹시 남아있는 타이핑 문서 삭제 (스토리 이탈 시)
+  if(curStoryId) try{await deleteDoc(doc(db,'typing_'+curStoryId.slice(0,8),myId));}catch(e){}
+}
+
+// ─── 대사 전체 삭제 ───
+window.clearStoryLogs = async function(){
+  if(!db||!curStoryId||!confirm('이 썰의 모든 대사를 삭제할까요?')) return;
+  setStatus('syncing');
+  const batch=writeBatch(db);
+  logs.forEach(m=>batch.delete(doc(db,'stories',curStoryId,'logs',m.id)));
+  await batch.commit();
+  setStatus('online');
+};
+
+// ─── 캐릭터 추가 ───
+window.openAdd = function(){
+  let selC=PALETTE[chars.length%PALETTE.length];
+  const modal=makeModal(`<h3>NEW CHARACTER</h3>
+    <div class="row2">
+      <input id="m-emoji" type="text" placeholder="이모지" maxlength="4">
+      <input id="m-name" type="text" placeholder="캐릭터 이름">
+    </div>
+    <div class="modal-section">COLOR</div>
+    <div class="color-opts" id="m-colors"></div>
+    <div class="modal-btns">
+      <button class="btn-ok" onclick="confirmAdd()">추가</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+    </div>`);
+  document.body.appendChild(modal);
+  renderPalette('m-colors',selC,c=>selC=c);
+  window._addColor=()=>selC;
+  setTimeout(()=>document.getElementById('m-emoji')?.focus(),50);
+};
+
+window.confirmAdd = async function(){
+  const emoji=document.getElementById('m-emoji').value.trim()||'👤';
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){document.getElementById('m-name').focus();return;}
+  closeModal();
+  setStatus('syncing');
+  await addDoc(collection(db,'stories',curStoryId,'chars'),{name,emoji,c:window._addColor(),order:Date.now()});
+  setStatus('online');
+};
+
+// ─── 캐릭터 편집 ───
+window.openEdit = function(id){
+  const ch=chars.find(c=>c.id===id);
+  if(!ch) return;
+  let selC=ch.c;
+  const modal=makeModal(`<h3>EDIT CHARACTER</h3>
+    <div class="row2">
+      <input id="m-emoji" type="text" placeholder="이모지" value="${esc(ch.emoji)}" maxlength="4">
+      <input id="m-name" type="text" placeholder="이름" value="${esc(ch.name)}">
+    </div>
+    <div class="modal-section">COLOR</div>
+    <div class="color-opts" id="m-colors"></div>
+    <div class="modal-btns">
+      <button class="btn-ok" onclick="confirmEdit('${id}')">저장</button>
+      <button class="btn-del" onclick="confirmDel('${id}')">삭제</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+    </div>`);
+  document.body.appendChild(modal);
+  renderPalette('m-colors',ch.c,c=>selC=c);
+  window._editColor=()=>selC;
+};
+
+window.confirmEdit = async function(id){
+  const ch=chars.find(c=>c.id===id);
+  const emoji=document.getElementById('m-emoji').value.trim()||ch.emoji;
+  const name=document.getElementById('m-name').value.trim()||ch.name;
+  closeModal();
+  setStatus('syncing');
+  await setDoc(doc(db,'stories',curStoryId,'chars',id),{...ch,emoji,name,c:window._editColor()},{merge:true});
+  setStatus('online');
+};
+
+window.confirmDel = async function(id){
+  if(!confirm('이 캐릭터를 삭제할까요?')) return;
+  closeModal();
+  setStatus('syncing');
+  const batch=writeBatch(db);
+  batch.delete(doc(db,'stories',curStoryId,'chars',id));
+  logs.filter(m=>m.charId===id).forEach(m=>batch.delete(doc(db,'stories',curStoryId,'logs',m.id)));
+  await batch.commit();
+  setStatus('online');
+};
+
+// ─── 모달 유틸 ───
+window.closeModal = function(){document.querySelectorAll('.modal-bg').forEach(e=>e.remove());}
+function makeModal(inner,extraClass=''){
+  const bg=document.createElement('div');
+  bg.className='modal-bg';
+  bg.innerHTML=`<div class="modal${extraClass?' '+extraClass:''}">${inner}</div>`;
+  bg.addEventListener('click',e=>{if(e.target===bg)closeModal();});
+  return bg;
+}
+
+function renderPalette(cid,selected,cb){
+  const el=document.getElementById(cid);
+  el.innerHTML=PALETTE.map((p,i)=>
+    `<div class="color-opt${p===selected?' sel':''}" style="background:${p.text}" data-i="${i}" onclick="pickColor(this,'${cid}',${i})"></div>`
+  ).join('');
+  window['_cb_'+cid]=cb;
+}
+
+window.pickColor = function(el,cid,i){
+  document.querySelectorAll(`#${cid} .color-opt`).forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  window['_cb_'+cid](PALETTE[i]);
+};
+
+// ─── 이벤트 바인딩 ───
+document.getElementById('send-btn').onclick=send;
+document.getElementById('msg-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}
+});
+document.getElementById('msg-input').addEventListener('input',function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+  updateTypingDoc();
+});
+document.getElementById('char-select').addEventListener('change',()=>{
+  if(document.getElementById('msg-input').value.trim()) updateTypingDoc();
+});
+window.addEventListener('beforeunload',clearTyping);
+</script>
+</body>
+</html>
